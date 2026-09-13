@@ -1,12 +1,17 @@
 import importlib
 import os
+import traceback
 
+_dotenv = None
 try:
     _dotenv = importlib.import_module("dotenv")
-    load_dotenv = _dotenv.load_dotenv
-except ImportError:  # pragma: no cover - optional dependency in some environments
-    def load_dotenv(*args, **kwargs):
-        return False
+except ImportError:
+    _dotenv = None
+
+def load_dotenv(*args, **kwargs):
+    if _dotenv is not None:
+        return _dotenv.load_dotenv(*args, **kwargs)
+    return False
 
 from google import genai
 
@@ -15,7 +20,7 @@ load_dotenv()
 _api_key = os.getenv("GEMINI_API_KEY")
 if not _api_key:
     raise RuntimeError(
-        "GEMINI_API_KEY is not set. Add it to server/.env"
+        "GEMINI_API_KEY is not set. Add it to server/.env or Render env vars."
     )
 
 _client = genai.Client(api_key=_api_key)
@@ -25,18 +30,28 @@ MODEL = "gemini-3.6-flash"
 
 def _generate(prompt: str) -> str:
     """Single-turn generation. Returns plain text."""
-    response = _client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-    )
-    return (response.text or "").strip()
+    try:
+        response = _client.models.generate_content(
+            model=MODEL,
+            contents=prompt,
+        )
+        return (response.text or "").strip()
+    except Exception as e:
+        # Log full details so we can see them in Render logs
+        print("=" * 60)
+        print("GEMINI ERROR")
+        print(f"Type:    {type(e).__name__}")
+        print(f"Message: {e}")
+        print(f"Key prefix: {_api_key[:8] if _api_key else 'MISSING'}")
+        print(f"Key length: {len(_api_key) if _api_key else 0}")
+        print(f"Model:   {MODEL}")
+        print("-" * 60)
+        traceback.print_exc()
+        print("=" * 60)
+        raise
 
 
 def generate_insight(student_data: dict) -> str:
-    """
-    Build a short, personalized study insight from the student's plan.
-    Returns 2-4 sentences of plain text.
-    """
     name = student_data.get("name", "the student")
     study_hours = student_data.get("study_hours", 0)
     has_deadlines = student_data.get("has_deadlines", False)
@@ -74,14 +89,10 @@ Rules:
         text = _generate(prompt)
         return text or "Keep going — consistency beats intensity."
     except Exception as e:
-        return f"(AI unavailable: {type(e).__name__})"
+        return f"(AI unavailable: {type(e).__name__}: {e})"
 
 
 def chat_reply(message: str, student_context: dict | None = None) -> str:
-    """
-    Multi-turn-style chat reply. Single call for now — one question, one answer.
-    student_context (optional): dict with name, subjects, weak subjects, etc.
-    """
     context_block = ""
     if student_context:
         name = student_context.get("name", "the student")
@@ -114,13 +125,10 @@ Student's question:
     try:
         return _generate(prompt) or "I didn't catch that. Try rephrasing?"
     except Exception as e:
-        return f"(AI unavailable: {type(e).__name__})"
+        return f"(AI unavailable: {type(e).__name__}: {e})"
 
 
 def summarize_notes(notes: str, focus: str | None = None) -> str:
-    """
-    Summarize study notes. focus (optional): a subject or angle.
-    """
     focus_line = f"\nFocus the summary around: {focus}\n" if focus else ""
 
     prompt = f"""You are StudyMate AI. Summarize the following study notes for a student.
@@ -139,14 +147,10 @@ Notes:
     try:
         return _generate(prompt) or "Couldn't summarize those notes."
     except Exception as e:
-        return f"(AI unavailable: {type(e).__name__})"
+        return f"(AI unavailable: {type(e).__name__}: {e})"
 
 
 def generate_quiz(topic: str, difficulty: str = "Medium", count: int = 5) -> str:
-    """
-    Generate quiz questions on a topic. Returns formatted text.
-    We keep this text-based for now — a JSON quiz flow comes later.
-    """
     prompt = f"""You are StudyMate AI. Generate a short quiz for a student.
 
 Topic: {topic}
@@ -171,6 +175,4 @@ Rules:
     try:
         return _generate(prompt) or "Couldn't generate a quiz."
     except Exception as e:
-        import traceback
-        traceback.print_exc()
         return f"(AI unavailable: {type(e).__name__}: {e})"
