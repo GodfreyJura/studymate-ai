@@ -1,0 +1,201 @@
+.student-form-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--bg);
+}
+
+.student-form-card {
+  width: 100%;
+  max-width: 720px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+  position: relative;
+}
+
+.student-form-header {
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.student-form-header h1 {
+  font-size: 1.75rem;
+  margin: 0.25rem 0 0.5rem;
+  color: var(--text-strong);
+}
+
+.student-form-header p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.student-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.student-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.student-form label > span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.student-form input[type="text"],
+.student-form input[type="number"],
+.student-form select {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  color: inherit;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.student-form input:focus,
+.student-form select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.checkbox-label {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.6rem !important;
+  padding-top: 1.6rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.subjects-section {
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.subjects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.subjects-header h3 {
+  margin: 0.25rem 0 0;
+  font-size: 1.1rem;
+  color: var(--text-strong);
+}
+
+.subject-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.subject-row {
+  display: grid;
+  grid-template-columns: 1fr 130px 100px 36px;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.remove-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.remove-button:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.remove-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.form-error {
+  background: var(--danger-soft);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.form-submit {
+  align-self: flex-start;
+  padding: 0.85rem 1.5rem;
+  font-size: 0.95rem;
+}
+
+.form-close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.form-close-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.form-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.form-modal-backdrop .student-form-page {
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+}
