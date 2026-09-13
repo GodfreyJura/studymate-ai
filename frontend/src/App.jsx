@@ -6,7 +6,7 @@ import "./styles/StudyPlan.css";
 import "./styles/QuizPerformance.css";
 import "./styles/Settings.css";
 import "./styles/StudentForm.css";
-import "./styles/AITutor.css";
+import "./styles/AiTutor.css";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import Subjects from "./components/Subjects";
@@ -16,7 +16,6 @@ import Settings from "./components/Settings";
 import StudentForm from "./components/StudentForm";
 import AiTutor from "./components/AiTutor";
 import { createStudent } from "./api";
-
 const STORAGE_KEY = "studymate-student";
 
 function loadFromStorage() {
