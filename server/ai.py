@@ -1,5 +1,6 @@
 import importlib
 import os
+import time
 import traceback
 
 _dotenv = None
@@ -8,10 +9,12 @@ try:
 except ImportError:
     _dotenv = None
 
+
 def load_dotenv(*args, **kwargs):
     if _dotenv is not None:
         return _dotenv.load_dotenv(*args, **kwargs)
     return False
+
 
 from google import genai
 
@@ -25,30 +28,66 @@ if not _api_key:
 
 _client = genai.Client(api_key=_api_key)
 
-MODEL = "gemini-3.6-flash"
+# Try these models in order. First one that works wins.
+# Newest/best first, most stable as fallback.
+MODELS = [
+    "gemini-3.6-flash",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+]
 
 
 def _generate(prompt: str) -> str:
-    """Single-turn generation. Returns plain text."""
-    try:
-        response = _client.models.generate_content(
-            model=MODEL,
-            contents=prompt,
-        )
-        return (response.text or "").strip()
-    except Exception as e:
-        # Log full details so we can see them in Render logs
-        print("=" * 60)
-        print("GEMINI ERROR")
-        print(f"Type:    {type(e).__name__}")
-        print(f"Message: {e}")
-        print(f"Key prefix: {_api_key[:8] if _api_key else 'MISSING'}")
-        print(f"Key length: {len(_api_key) if _api_key else 0}")
-        print(f"Model:   {MODEL}")
-        print("-" * 60)
-        traceback.print_exc()
-        print("=" * 60)
-        raise
+    """Generate text with retry + model fallback."""
+    last_error = None
+
+    for model in MODELS:
+        for attempt in range(2):  # 2 tries per model
+            try:
+                response = _client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                )
+                text = (response.text or "").strip()
+                if text:
+                    return text
+                # Empty response — try again / next model
+                print(f"[{model}] empty response, attempt {attempt + 1}")
+            except Exception as e:
+                last_error = e
+                error_str = str(e)
+
+                # 503 = temporary overload → retry same model
+                if "503" in error_str or "UNAVAILABLE" in error_str:
+                    print(f"[{model}] busy (503), retrying in 2s...")
+                    time.sleep(2)
+                    continue
+
+                # 429 = rate limit → wait longer, then retry
+                if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+                    print(f"[{model}] rate limited (429), waiting 5s...")
+                    time.sleep(5)
+                    continue
+
+                # 404 = model not available → skip to next model
+                if "404" in error_str or "NOT_FOUND" in error_str:
+                    print(f"[{model}] not available, trying next model...")
+                    break
+
+                # Other error → log and move on to next model
+                print(f"[{model}] error: {type(e).__name__}: {e}")
+
+    # All models and retries exhausted
+    print("=" * 60)
+    print("ALL GEMINI MODELS FAILED")
+    print(f"Key prefix: {_api_key[:8] if _api_key else 'MISSING'}")
+    print(f"Key length: {len(_api_key) if _api_key else 0}")
+    print(f"Last error: {last_error}")
+    print("=" * 60)
+    traceback.print_exception(
+        type(last_error), last_error, last_error.__traceback__
+    ) if last_error else None
+    raise RuntimeError(f"All Gemini models failed. Last error: {last_error}")
 
 
 def generate_insight(student_data: dict) -> str:
