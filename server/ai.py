@@ -171,4 +171,6 @@ Rules:
     try:
         return _generate(prompt) or "Couldn't generate a quiz."
     except Exception as e:
-        return f"(AI unavailable: {type(e).__name__})"
+        import traceback
+        traceback.print_exc()
+        return f"(AI unavailable: {type(e).__name__}: {e})"
