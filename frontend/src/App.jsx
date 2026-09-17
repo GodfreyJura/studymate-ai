@@ -16,6 +16,7 @@ import Settings from "./components/Settings";
 import StudentForm from "./components/StudentForm";
 import AiTutor from "./components/AiTutor";
 import { createStudent } from "./api";
+
 const STORAGE_KEY = "studymate-student";
 
 function loadFromStorage() {
@@ -35,14 +36,22 @@ function saveToStorage(payload) {
   }
 }
 
+function clearStorage() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 function App() {
   const [activeSection, setActiveSection] = useState("dashboard");
 
-  const [savedInput] = useState(loadFromStorage);
+  const [savedInput, setSavedInput] = useState(loadFromStorage);
   const [studentData, setStudentData] = useState(null);
-  const [loading, setLoading] = useState(Boolean(savedInput));
+  const [loading, setLoading] = useState(Boolean(loadFromStorage()));
   const [error, setError] = useState("");
-  const [showForm, setShowForm] = useState(!savedInput);
+  const [showForm, setShowForm] = useState(!loadFromStorage());
 
   useEffect(() => {
     if (!savedInput) return;
@@ -72,11 +81,26 @@ function App() {
     const data = await createStudent(input);
     setStudentData(data);
     saveToStorage(input);
+    setSavedInput(input);
   }
 
   async function handleFormSubmit(input) {
     await refreshPlan(input);
     setShowForm(false);
+    setActiveSection("dashboard");
+  }
+
+  function handleEditProfile() {
+    setShowForm(true);
+  }
+
+  function handleResetProfile() {
+    clearStorage();
+    setSavedInput(null);
+    setStudentData(null);
+    setError("");
+    setLoading(false);
+    setShowForm(true);
     setActiveSection("dashboard");
   }
 
@@ -135,7 +159,14 @@ function App() {
     if (activeSection === "study-plan") return <StudyPlan data={studentData} />;
     if (activeSection === "quiz") return <QuizPerformance data={studentData} />;
     if (activeSection === "tutor") return <AiTutor data={studentData} />;
-    if (activeSection === "settings") return <Settings />;
+    if (activeSection === "settings")
+      return (
+        <Settings
+          studentData={studentData}
+          onEditProfile={handleEditProfile}
+          onResetProfile={handleResetProfile}
+        />
+      );
 
     return <Dashboard data={studentData} />;
   };
@@ -145,6 +176,7 @@ function App() {
       <Sidebar
         activeSection={activeSection}
         setActiveSection={setActiveSection}
+        studentData={studentData}
       />
 
       <main className="main-content">
@@ -157,15 +189,7 @@ function App() {
           <div className="topbar-actions">
             <button
               className="secondary-button"
-              onClick={() => setShowForm(true)}
-              title="Create a new study plan"
-            >
-              + New plan
-            </button>
-
-            <button
-              className="secondary-button"
-              onClick={() => setShowForm(true)}
+              onClick={handleEditProfile}
               title="Update your subjects or hours"
             >
               Edit profile

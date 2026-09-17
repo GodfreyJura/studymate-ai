@@ -1,4 +1,4 @@
-function Sidebar({ activeSection, setActiveSection }) {
+function Sidebar({ activeSection, setActiveSection, studentData }) {
   const navigation = [
     { id: "dashboard", icon: "⌂", label: "Dashboard" },
     { id: "subjects", icon: "▣", label: "My Subjects" },
@@ -6,6 +6,10 @@ function Sidebar({ activeSection, setActiveSection }) {
     { id: "quiz", icon: "◈", label: "Quiz Performance" },
     { id: "tutor", icon: "✦", label: "AI Tutor" },
   ];
+
+  const studentName = studentData?.name || "Student";
+  const studentRole = studentData?.role || "Student";
+  const initial = studentName.charAt(0).toUpperCase();
 
   return (
     <aside className="sidebar">
@@ -45,11 +49,11 @@ function Sidebar({ activeSection, setActiveSection }) {
         </button>
 
         <div className="student-mini-profile">
-          <div className="avatar">G</div>
+          <div className="avatar">{initial}</div>
 
           <div>
-            <strong>Godfrey</strong>
-            <span>Student</span>
+            <strong>{studentName}</strong>
+            <span>{studentRole}</span>
           </div>
         </div>
       </div>
